@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumina — Smart Photo Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --forest-950:#0d1b16;
+    --forest-900:#132a22;
+    --forest-800:#1c3b30;
+    --forest-700:#2a5344;
+    --forest-600:#3a6b58;
+    --sand-100:#f4efe4;
+    --sand-200:#e8dfc9;
+    --amber-400:#d9a441;
+    --amber-500:#c4872a;
+    --clay-500:#c1633f;
+    --text-hi:#f4efe4;
+    --text-lo:#a9bcb2;
+    --text-faint:#7c9086;
+
+    /* fluid layout rhythm */
+    --page-pad: clamp(20px, 5vw, 64px);
+    --section-gap: clamp(40px, 6vw, 72px);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --max-w: 1280px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(217,164,65,0.07), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(42,83,68,0.35), transparent 55%),
+      var(--forest-950);
+    color:var(--text-hi);
+    font-family:'Manrope', sans-serif;
+    min-height:100vh;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  img{max-width:100%; display:block;}
+  button, input{font-family:inherit;}
+  ::selection{background:var(--amber-400); color:var(--forest-950);}
+
+  a:focus-visible, button:focus-visible, input:focus-visible, .card:focus-visible, .upload-zone:focus-visible{
+    outline:2px solid var(--amber-400);
+    outline-offset:3px;
+    border-radius:6px;
+  }
+
+  /* ---------- Layout shell ---------- */
+  .shell{
+    max-width:var(--max-w);
+    margin:0 auto;
+    padding-left:var(--page-pad);
+    padding-right:var(--page-pad);
+  }
+
+  /* ---------- Top bar ---------- */
+  header{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(13,27,22,0.82);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(244,239,228,0.08);
+  }
+  header .shell{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding-top:18px;
+    padding-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:21px;
+  }
+  .brand-mark{
+    width:30px; height:30px;
+    border-radius:9px;
+    background:linear-gradient(160deg, var(--amber-400), var(--clay-500));
+    box-shadow:0 4px 14px rgba(217,164,65,0.28);
+    flex-shrink:0;
+  }
+  .auth-area{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-size:13.5px;
+    color:var(--text-lo);
+  }
+  #userLabel{
+    max-width:200px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .btn{
+    border:none;
+    padding:9px 18px;
+    border-radius:999px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Manrope',sans-serif;
+    font-size:13px;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{
+    background:var(--amber-400);
+    color:var(--forest-950);
+  }
+  .btn-primary:hover{background:var(--amber-500); box-shadow:0 4px 14px rgba(217,164,65,0.25);}
+  .btn-ghost{
+    background:transparent;
+    color:var(--text-lo);
+    border:1px solid rgba(244,239,228,0.2);
+  }
+  .btn-ghost:hover{color:var(--text-hi); border-color:rgba(244,239,228,0.4);}
+
+  /* ---------- Hero / upload ---------- */
+  .hero{
+    padding-top:clamp(48px, 7vw, 84px);
+    padding-bottom:var(--section-gap);
+    text-align:center;
+  }
+  .eyebrow{
+    color:var(--amber-400);
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.16em;
+    margin-bottom:16px;
+    font-weight:600;
+  }
+  .hero h1{
+    font-size:clamp(30px, 4.6vw, 52px);
+    line-height:1.1;
+    max-width:680px;
+    margin:0 auto 18px;
+  }
+  .hero p{
+    color:var(--text-lo);
+    font-size:clamp(15px, 1.6vw, 17px);
+    max-width:500px;
+    margin:0 auto 40px;
+  }
+
+  .upload-zone{
+    display:block;
+    max-width:580px;
+    margin:0 auto;
+    border:1.5px dashed rgba(217,164,65,0.4);
+    border-radius:var(--radius-lg);
+    padding:clamp(28px, 4vw, 44px) 24px;
+    background:rgba(244,239,228,0.02);
+    transition:border-color 0.2s, background 0.2s, transform 0.2s;
+    cursor:pointer;
+  }
+  .upload-zone:hover, .upload-zone.dragover{
+    border-color:var(--amber-400);
+    background:rgba(217,164,65,0.07);
+    transform:translateY(-1px);
+  }
+  .upload-zone input{display:none;}
+  .upload-icon{
+    width:44px; height:44px;
+    margin:0 auto 14px;
+    border-radius:12px;
+    background:var(--forest-800);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .upload-icon svg{width:20px; height:20px; stroke:var(--amber-400);}
+  .upload-zone .label{font-size:15.5px; font-weight:600; margin-bottom:5px;}
+  .upload-zone .sub{font-size:13px; color:var(--text-lo);}
+
+  .upload-progress{
+    max-width:580px;
+    margin:16px auto 0;
+    display:none;
+    text-align:left;
+    background:var(--forest-900);
+    border:1px solid rgba(244,239,228,0.08);
+    border-radius:var(--radius-md);
+    padding:14px 18px;
+  }
+  .upload-progress.active{display:block;}
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    color:var(--text-lo);
+    margin-bottom:8px;
+    gap:12px;
+  }
+  #progressLabel{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .progress-track{
+    height:5px;
+    background:var(--forest-800);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--amber-500), var(--amber-400));
+    border-radius:3px;
+    transition:width 0.25s linear;
+  }
+
+  /* ---------- Search + filters ---------- */
+  .gallery-section{
+    padding-bottom:80px;
+  }
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .search-box{
+    position:relative;
+    flex:1;
+    min-width:240px;
+    max-width:440px;
+  }
+  .search-box input{
+    width:100%;
+    background:var(--forest-900);
+    border:1px solid rgba(244,239,228,0.12);
+    border-radius:999px;
+    padding:12px 16px 12px 42px;
+    color:var(--text-hi);
+    font-family:'Manrope', sans-serif;
+    font-size:14px;
+    outline:none;
+    transition:border-color 0.15s, background 0.15s;
+  }
+  .search-box input::placeholder{color:var(--text-faint);}
+  .search-box input:focus{border-color:var(--amber-400); background:var(--forest-800);}
+  .search-box svg{
+    position:absolute; left:15px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; stroke:var(--text-lo);
+    pointer-events:none;
+  }
+  .result-count{font-size:13px; color:var(--text-lo); white-space:nowrap;}
+
+  .tag-rail{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:32px;
+  }
+  .tag-chip{
+    font-size:13px;
+    padding:7px 16px;
+    border-radius:999px;
+    border:1px solid rgba(244,239,228,0.14);
+    background:transparent;
+    color:var(--text-lo);
+    cursor:pointer;
+    transition:all 0.15s;
+    font-family:'Manrope', sans-serif;
+  }
+  .tag-chip:hover{border-color:var(--amber-400); color:var(--text-hi);}
+  .tag-chip.active{
+    background:var(--amber-400);
+    border-color:var(--amber-400);
+    color:var(--forest-950);
+    font-weight:700;
+  }
+
+  /* ---------- Grid (Google-Photos style dense grid) ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+    gap:6px;
+  }
+  .card{
+    position:relative;
+    border-radius:var(--radius-sm);
+    overflow:hidden;
+    aspect-ratio:1/1;
+    background:var(--forest-800);
+    cursor:pointer;
+    isolation:isolate;
+  }
+  .card img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+    transition:transform 0.4s cubic-bezier(.2,.8,.2,1);
+  }
+  .card:hover img{transform:scale(1.06);}
+  .card::after{
+    content:"";
+    position:absolute; inset:0;
+    box-shadow:inset 0 0 0 1px rgba(244,239,228,0.06);
+    border-radius:var(--radius-sm);
+    pointer-events:none;
+  }
+  .card-overlay{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    padding:16px 10px 10px;
+    background:linear-gradient(to top, rgba(13,27,22,0.9), transparent);
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    opacity:0;
+    transform:translateY(4px);
+    transition:opacity 0.2s ease, transform 0.2s ease;
+  }
+  .card:hover .card-overlay, .card:focus-within .card-overlay{
+    opacity:1;
+    transform:translateY(0);
+  }
+  .mini-tag{
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:999px;
+    background:rgba(244,239,228,0.16);
+    backdrop-filter:blur(4px);
+    color:var(--text-hi);
+  }
+  .delete-btn{
+    position:absolute;
+    top:8px; left:8px;
+    width:28px; height:28px;
+    border-radius:50%;
+    background:rgba(13,27,22,0.8);
+    border:1px solid rgba(244,239,228,0.15);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    opacity:0;
+    transition:opacity 0.15s, background 0.15s, transform 0.15s;
+    z-index:2;
+  }
+  .card:hover .delete-btn, .card:focus-within .delete-btn{opacity:1;}
+  .delete-btn:hover{background:var(--clay-500); transform:scale(1.06);}
+  .delete-btn svg{width:14px; height:14px; stroke:var(--text-hi);}
+
+  .loading-state{
+    text-align:center;
+    padding:80px 20px;
+    color:var(--text-lo);
+    grid-column:1/-1;
+    font-size:14px;
+  }
+  .empty-state{
+    text-align:center;
+    padding:80px 20px;
+    color:var(--text-lo);
+    grid-column:1/-1;
+    border:1px dashed rgba(244,239,228,0.12);
+    border-radius:var(--radius-lg);
+  }
+  .empty-state .display{font-size:21px; color:var(--text-hi); margin-bottom:8px;}
+
+  footer{
+    text-align:center;
+    padding:28px 20px;
+    font-size:12px;
+    color:var(--text-faint);
+    border-top:1px solid rgba(244,239,228,0.08);
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:900px){
+    .grid{grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:5px;}
+  }
+
+  @media (max-width:640px){
+    :root{ --page-pad:18px; }
+    header .shell{padding-top:14px; padding-bottom:14px;}
+    .brand{font-size:19px;}
+    .auth-area{font-size:12.5px; gap:10px;}
+    #userLabel{max-width:110px;}
+    .btn{padding:8px 14px; font-size:12.5px;}
+    .hero{padding-top:36px; padding-bottom:44px;}
+    .toolbar{gap:12px;}
+    .search-box{max-width:none; width:100%;}
+    .result-count{width:100%; text-align:left;}
+    .grid{grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:4px;}
+    .card{border-radius:6px;}
+  }
+
+  @media (max-width:400px){
+    .grid{grid-template-columns:repeat(3, 1fr);}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="shell">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <span class="display">Lumina</span>
+    </div>
+    <div class="auth-area">
+      <span id="userLabel">Not signed in</span>
+      <button id="loginBtn" class="btn btn-primary">Sign in</button>
+      <button id="logoutBtn" class="btn btn-ghost" style="display:none;">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="shell">
+    <div class="eyebrow">AI-tagged, serverless on AWS</div>
+    <h1>Upload a photo. Let AWS figure out what's in it.</h1>
+    <p>Rekognition tags every photo automatically — search by what's inside, not what you named the file.</p>
+
+    <label class="upload-zone" id="uploadZone" tabindex="0">
+      <input type="file" id="fileInput" accept="image/*" multiple>
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+      </div>
+      <div class="label">Drop photos here, or click to browse</div>
+      <div class="sub">JPG or PNG — tags appear within a few seconds of upload</div>
+    </label>
+
+    <div class="upload-progress" id="uploadProgress">
+      <div class="progress-row">
+        <span id="progressLabel">Uploading sunset.jpg…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="gallery-section">
+  <div class="shell">
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by tag — try 'dog' or 'beach'">
+      </div>
+      <span class="result-count" id="resultCount">6 photos</span>
+    </div>
+
+    <div class="tag-rail" id="tagRail"></div>
+
+    <div class="grid" id="photoGrid"></div>
+  </div>
+</section>
+
+<footer>
+Lumina — Serverless Smart Photo Gallery
+</footer>
+
+<script>
+/* ============================================================
+   AWS Configuration
+   Replace the placeholders below with your own AWS resources
+   before deploying the application.
+   ============================================================ */
+const API_BASE = "YOUR_API_GATEWAY_URL";
+
+const COGNITO_DOMAIN = "YOUR_COGNITO_DOMAIN";
+
+const COGNITO_CLIENT_ID = "YOUR_COGNITO_CLIENT_ID";
+
+const REDIRECT_URI = "YOUR_CLOUDFRONT_URL";
+
+
+function getIdToken() {
+  return sessionStorage.getItem("idToken");
+}
+
+function login() {
+  const url =
+    `${COGNITO_DOMAIN}/login` +
+    `?client_id=${COGNITO_CLIENT_ID}` +
+    `&response_type=code` +
+    `&scope=openid+email+phone` +
+    `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+
+  window.location.href = url;
+}
+
+function logout() {
+  sessionStorage.removeItem("idToken");
+  const url = `${COGNITO_DOMAIN}/logout?client_id=${COGNITO_CLIENT_ID}&logout_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  window.location.href = url;
+}
+
+function checkAuthOnLoad() {
+  // Cognito redirects back with #id_token=...&access_token=... in the URL
+  const hash = window.location.hash;
+  if (hash.includes("id_token")) {
+    const params = new URLSearchParams(hash.substring(1));
+    const idToken = params.get("id_token");
+    if (idToken) {
+      sessionStorage.setItem("idToken", idToken);
+      window.history.replaceState({}, document.title, window.location.pathname); // clean the URL
+    }
+  }
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const token = getIdToken();
+  const label = document.getElementById("userLabel");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      label.textContent = `Signed in as ${payload.email || "user"}`;
+    } catch (e) {
+      label.textContent = "Signed in";
+    }
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+  } else {
+    label.textContent = "Not signed in";
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+  }
+}
+
+let currentPhotos = [];   // photos currently shown, loaded from the server
+let activeTag = null;
+let searchQuery = "";
+
+/* ---------------- API calls ---------------- */
+
+async function apiGetUploadUrl(filename) {
+  const res = await fetch(`${API_BASE}/upload-url`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${getIdToken()}` },
+    body: JSON.stringify({ filename })
+  });
+  if (!res.ok) throw new Error("Failed to get upload URL");
+  return res.json(); // { uploadUrl, photoUrl, key }
+}
+
+async function apiSearchPhotos(tag = "") {
+  const url = `${API_BASE}/search${tag ? "?tag=" + encodeURIComponent(tag) : ""}`;
+  const res = await fetch(url, {
+    headers: { "Authorization": `Bearer ${getIdToken()}` }
+  });
+  if (!res.ok) throw new Error("Search request failed");
+  return res.json(); // array of { photoId, url, tags, uploadedAt }
+}
+
+async function apiDeletePhoto(photoId) {
+  const res = await fetch(`${API_BASE}/photo`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${getIdToken()}` },
+    body: JSON.stringify({ photoId })
+  });
+  if (!res.ok) throw new Error("Delete request failed");
+  return res.json();
+}
+
+/* ---------------- Rendering ---------------- */
+
+function getAllTags(photos){
+  const set = new Set();
+  photos.forEach(p => (p.tags || []).forEach(t => set.add(t)));
+  return [...set].sort();
+}
+
+function renderTagRail(){
+  const rail = document.getElementById('tagRail');
+  const tags = getAllTags(currentPhotos);
+  rail.innerHTML = '';
+
+  const allChip = document.createElement('button');
+  allChip.className = 'tag-chip' + (activeTag === null ? ' active' : '');
+  allChip.textContent = 'All';
+  allChip.onclick = () => { activeTag = null; refresh(); };
+  rail.appendChild(allChip);
+
+  tags.forEach(tag => {
+    const chip = document.createElement('button');
+    chip.className = 'tag-chip' + (activeTag === tag ? ' active' : '');
+    chip.textContent = tag;
+    chip.onclick = () => { activeTag = (activeTag === tag ? null : tag); refresh(); };
+    rail.appendChild(chip);
+  });
+}
+
+function renderGrid(){
+  const grid = document.getElementById('photoGrid');
+  let photos = currentPhotos;
+
+  if (activeTag) photos = photos.filter(p => (p.tags || []).includes(activeTag));
+
+  document.getElementById('resultCount').textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
+
+  if (photos.length === 0){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="display">No matches</div>
+      <div>Try a different tag or search term, or upload a photo above.</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = photos.map(p => `
+    <div class="card" data-id="${p.photoId}">
+      <img src="${p.url}" alt="${(p.tags || []).join(', ')}" loading="lazy">
+      <div class="delete-btn" onclick="handleDelete('${p.photoId}')" title="Delete photo">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </div>
+      <div class="card-overlay">
+        ${(p.tags || []).map(t => `<span class="mini-tag">${t}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function showLoading(){
+  document.getElementById('photoGrid').innerHTML = `<div class="loading-state">Loading photos…</div>`;
+}
+
+async function refresh(){
+  try {
+    currentPhotos = await apiSearchPhotos(activeTag || searchQuery);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('photoGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="display">Couldn't load photos</div><div>Check API_BASE and CORS settings, then check the browser console.</div></div>`;
+    return;
+  }
+  renderTagRail();
+  renderGrid();
+}
+
+/* ---------------- Delete ---------------- */
+
+async function handleDelete(photoId){
+  if (!confirm("Delete this photo? This can't be undone.")) return;
+  const card = document.querySelector(`.card[data-id="${CSS.escape(photoId)}"]`);
+  if (card) card.style.opacity = "0.4";
+  try {
+    await apiDeletePhoto(photoId);
+    currentPhotos = currentPhotos.filter(p => p.photoId !== photoId);
+    renderTagRail();
+    renderGrid();
+  } catch (err) {
+    console.error(err);
+    alert("Delete failed — check the console for details.");
+    if (card) card.style.opacity = "1";
+  }
+}
+
+/* ---------------- Search box ---------------- */
+
+let searchDebounce;
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchQuery = e.target.value.trim();
+  activeTag = null; // typing a search clears the tag filter
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(refresh, 300); // wait for typing to pause
+});
+
+/* ---------------- Upload ---------------- */
+
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const uploadProgress = document.getElementById('uploadProgress');
+const progressFill = document.getElementById('progressFill');
+const progressPct = document.getElementById('progressPct');
+const progressLabel = document.getElementById('progressLabel');
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleUpload(file);
+});
+
+['dragover','dragleave','drop'].forEach(evt => {
+  uploadZone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    uploadZone.classList.toggle('dragover', evt === 'dragover');
+    if (evt === 'drop' && e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
+  });
+});
+
+async function handleUpload(file){
+  progressLabel.textContent = `Uploading ${file.name}…`;
+  progressPct.textContent = "0%";
+  progressFill.style.width = "0%";
+  uploadProgress.classList.add('active');
+
+  try {
+    // 1. Ask backend for a presigned S3 URL
+    const { uploadUrl } = await apiGetUploadUrl(file.name);
+
+    // 2. Upload the actual file straight to S3
+    progressFill.style.width = "50%";
+    progressPct.textContent = "50%";
+    await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type || "image/jpeg" } });
+    progressFill.style.width = "100%";
+    progressPct.textContent = "100%";
+
+    // 3. Rekognition tagging happens async on AWS's side — poll briefly then refresh
+    progressLabel.textContent = `Tagging ${file.name}…`;
+    await new Promise(r => setTimeout(r, 4000)); // give Lambda+Rekognition time to finish
+    uploadProgress.classList.remove('active');
+    await refresh();
+  } catch (err) {
+    console.error(err);
+    uploadProgress.classList.remove('active');
+    alert("Upload failed — check the console and confirm API_BASE / CORS are set correctly.");
+  }
+}
+
+/* ---------------- Auth button wiring ---------------- */
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("logoutBtn").addEventListener("click", logout);
+
+/* ---------------- Init ---------------- */
+checkAuthOnLoad();
+showLoading();
+refresh();
+</script>
+</body>
+</html>
