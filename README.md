@@ -146,8 +146,8 @@ Sensitive AWS configuration values (API Gateway URL, Cognito Domain, Client ID, 
 
 **Ramit Ranjan**
 
-- GitHub: https://github.com/ramit-ranjan
-- LinkedIn: https://www.linkedin.com/in/your-linkedin-profile/
+- GitHub: https://github.com/ramit-ranjan/Lumina-Smart-Photo-Gallery
+- LinkedIn: https://www.linkedin.com/in/ramit-ranjan-959021293/
 
 ---
 
